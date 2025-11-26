@@ -1,0 +1,35 @@
+[
+  {
+    "website": "ionos.co.uk",
+    "results": {
+      "linkedin": null,
+      "email": "navigation-link-name-info@ionos.co.uk",
+      "twitter": null,
+      "phone": null,
+      "whmcs": false
+    },
+    "timestamp": "2025-11-26T23:04:05.387Z"
+  },
+  {
+    "website": "gtxgaming.co.uk",
+    "results": {
+      "linkedin": "https://www.linkedin.com/company/gtxgaming/",
+      "email": "support@gtxgaming.co.uk",
+      "twitter": null,
+      "phone": null,
+      "whmcs": true
+    },
+    "timestamp": "2025-11-26T23:04:15.479Z"
+  },
+  {
+    "website": "verpex.com",
+    "results": {
+      "linkedin": "https://www.linkedin.com/company/verpexhosting/",
+      "email": "support@verpex.com",
+      "twitter": null,
+      "phone": null,
+      "whmcs": false
+    },
+    "timestamp": "2025-11-26T23:04:29.458Z"
+  }
+]
