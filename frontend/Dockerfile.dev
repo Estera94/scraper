@@ -1,0 +1,25 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Configure npm for better performance and reliability
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set progress false
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+# Use --verbose to see progress, --no-audit to speed up
+RUN npm install --verbose --no-audit || npm install --verbose --no-audit --legacy-peer-deps
+
+# Copy application code
+COPY . .
+
+EXPOSE 5173
+
+# Start Vite dev server
+CMD ["npm", "run", "dev", "--", "--host"]
+

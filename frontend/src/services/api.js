@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+import api from './auth.js';
 
 export const scrapeWebsites = async (websites, infoTypes) => {
   const response = await api.post('/scrape', { websites, infoTypes });
@@ -17,13 +10,8 @@ export const getResults = async () => {
   return response.data;
 };
 
-export const saveResults = async (results) => {
-  const response = await api.post('/save', { results });
-  return response.data;
-};
-
-export const deleteResult = async (index) => {
-  const response = await api.delete(`/results/${index}`);
+export const deleteResult = async (id) => {
+  const response = await api.delete(`/results/${id}`);
   return response.data;
 };
 

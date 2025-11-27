@@ -1,14 +1,17 @@
 import express from 'express';
 import { Scraper } from '../services/scraper.js';
-import { addResult, readResults, saveResults, deleteResult, deleteAllResults } from '../utils/fileManager.js';
+import { authenticate } from '../middleware/auth.js';
+import { checkCredits, deductCredits, CREDITS_PER_SCRAPE } from '../services/creditService.js';
+import prisma from '../db/prisma.js';
 
 const router = express.Router();
 const scraper = new Scraper();
 
-// Scrape websites for selected information
-router.post('/scrape', async (req, res) => {
+// Scrape websites for selected information (protected route)
+router.post('/scrape', authenticate, async (req, res) => {
   try {
     const { websites, infoTypes } = req.body;
+    const userId = req.user.id;
 
     if (!websites || !Array.isArray(websites) || websites.length === 0) {
       return res.status(400).json({ error: 'Websites array is required' });
@@ -16,6 +19,19 @@ router.post('/scrape', async (req, res) => {
 
     if (!infoTypes || !Array.isArray(infoTypes) || infoTypes.length === 0) {
       return res.status(400).json({ error: 'Info types array is required' });
+    }
+
+    // Calculate required credits (1 credit per website)
+    const requiredCredits = websites.length * CREDITS_PER_SCRAPE;
+
+    // Check if user has sufficient credits
+    const creditCheck = await checkCredits(userId, requiredCredits);
+    if (!creditCheck.hasCredits) {
+      return res.status(402).json({
+        error: 'Insufficient credits',
+        required: requiredCredits,
+        current: creditCheck.currentCredits
+      });
     }
 
     const results = [];
@@ -26,8 +42,14 @@ router.post('/scrape', async (req, res) => {
         console.log(`Scraping ${website} for: ${infoTypes.join(', ')}`);
         const scrapedData = await scraper.scrapeWebsite(website, infoTypes);
         
-        // Save to JSON file
-        await addResult(website, scrapedData);
+        // Save to database
+        await prisma.scrapeResult.create({
+          data: {
+            userId: userId,
+            website: website,
+            results: scrapedData
+          }
+        });
         
         results.push({
           website,
@@ -45,35 +67,74 @@ router.post('/scrape', async (req, res) => {
       }
     }
 
-    res.json({ results });
+    // Deduct credits after successful scrapes
+    const successfulScrapes = results.filter(r => r.success).length;
+    if (successfulScrapes > 0) {
+      await deductCredits(userId, successfulScrapes * CREDITS_PER_SCRAPE);
+    }
+
+    res.json({ 
+      results,
+      creditsUsed: successfulScrapes * CREDITS_PER_SCRAPE
+    });
   } catch (error) {
     console.error('Error in scrape endpoint:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get all saved results
-router.get('/results', async (req, res) => {
+// Get all saved results for the authenticated user
+router.get('/results', authenticate, async (req, res) => {
   try {
-    const results = await readResults();
-    res.json({ results });
+    const results = await prisma.scrapeResult.findMany({
+      where: { userId: req.user.id },
+      orderBy: { timestamp: 'desc' },
+      select: {
+        id: true,
+        website: true,
+        results: true,
+        timestamp: true
+      }
+    });
+
+    // Transform to match frontend expectations
+    const formattedResults = results.map(result => ({
+      id: result.id,
+      website: result.website,
+      results: result.results,
+      timestamp: result.timestamp.toISOString()
+    }));
+
+    res.json({ results: formattedResults });
   } catch (error) {
     console.error('Error reading results:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Delete a single result by index (MUST come before /results to match correctly)
-router.delete('/results/:index', async (req, res) => {
+// Delete a single result by ID
+router.delete('/results/:id', authenticate, async (req, res) => {
   try {
-    console.log('DELETE /results/:index called with index:', req.params.index);
-    const index = parseInt(req.params.index, 10);
+    const { id } = req.params;
     
-    if (isNaN(index)) {
-      return res.status(400).json({ error: 'Invalid index' });
+    // Verify the result belongs to the user
+    const result = await prisma.scrapeResult.findUnique({
+      where: { id },
+      select: { userId: true }
+    });
+
+    if (!result) {
+      return res.status(404).json({ error: 'Result not found' });
     }
 
-    await deleteResult(index);
+    if (result.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    await prisma.scrapeResult.delete({
+      where: { id }
+    });
+
     res.json({ success: true, message: 'Result deleted successfully' });
   } catch (error) {
     console.error('Error deleting result:', error);
@@ -81,31 +142,16 @@ router.delete('/results/:index', async (req, res) => {
   }
 });
 
-// Delete all results
-router.delete('/results', async (req, res) => {
+// Delete all results for the authenticated user
+router.delete('/results', authenticate, async (req, res) => {
   try {
-    console.log('DELETE /results called (delete all)');
-    await deleteAllResults();
+    await prisma.scrapeResult.deleteMany({
+      where: { userId: req.user.id }
+    });
+
     res.json({ success: true, message: 'All results deleted successfully' });
   } catch (error) {
     console.error('Error deleting all results:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Save results (already handled in scrape, but keeping for consistency)
-router.post('/save', async (req, res) => {
-  try {
-    const { results } = req.body;
-    
-    if (!results || !Array.isArray(results)) {
-      return res.status(400).json({ error: 'Results array is required' });
-    }
-
-    await saveResults(results);
-    res.json({ success: true, message: 'Results saved successfully' });
-  } catch (error) {
-    console.error('Error saving results:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -122,4 +168,3 @@ process.on('SIGTERM', async () => {
 });
 
 export default router;
-

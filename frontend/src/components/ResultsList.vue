@@ -1,51 +1,79 @@
 <template>
-  <div class="results-list">
-    <div v-if="results.length === 0" class="no-results">
+  <div class="mt-8">
+    <div v-if="results.length === 0" class="text-center py-12 text-gray-500 italic">
       No results yet. Start scraping to see results here.
     </div>
     
     <div v-else>
-      <div class="results-header">
-        <h2>Scraping Results</h2>
-        <div class="header-actions">
-          <button @click="exportResults" class="export-btn">Export JSON</button>
-          <button @click="handleDeleteAll" class="delete-all-btn">Delete All</button>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Scraping Results</h2>
+        <div class="flex gap-2">
+          <button
+            @click="exportResults"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium transition-colors"
+          >
+            Export JSON
+          </button>
+          <button
+            @click="handleDeleteAll"
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition-colors"
+          >
+            Delete All
+          </button>
         </div>
       </div>
       
-      <div class="results-container">
-        <div v-for="(result, index) in results" :key="index" class="result-card">
-          <div class="result-header">
-            <h3>{{ result.website }}</h3>
-            <div class="result-header-right">
-              <span class="timestamp">{{ formatDate(result.timestamp) }}</span>
-              <button @click="handleDelete(index)" class="delete-btn" :title="'Delete ' + result.website">
-                🗑️
+      <div class="space-y-4">
+        <div
+          v-for="result in results"
+          :key="result.id || result.website"
+          class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
+        >
+          <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">{{ result.website }}</h3>
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-gray-500">{{ formatDate(result.timestamp) }}</span>
+              <button
+                @click="handleDelete(result.id || result.website)"
+                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                :title="'Delete ' + result.website"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </button>
             </div>
           </div>
           
-          <div v-if="result.error || !result.results" class="error-message">
+          <div v-if="result.error || !result.results" class="text-red-700 bg-red-50 p-3 rounded-md">
             Error: {{ result.error || 'Failed to scrape website' }}
           </div>
           
-          <div v-else class="result-content">
-            <div v-for="(value, key) in result.results" :key="key" class="result-item">
-              <span class="result-label">{{ formatLabel(key) }}:</span>
-              <span v-if="key === 'whmcs'" class="result-value">
+          <div v-else class="space-y-3">
+            <div
+              v-for="(value, key) in result.results"
+              :key="key"
+              class="flex items-center gap-3 py-2"
+            >
+              <span class="text-sm font-semibold text-gray-600 min-w-[100px]">
+                {{ formatLabel(key) }}:
+              </span>
+              <span v-if="key === 'whmcs'" class="text-sm text-gray-900">
                 {{ value ? 'Yes' : 'No' }}
               </span>
-              <span v-else-if="value" class="result-value">
-                {{ value }}
-                <button 
-                  @click="copyToClipboard(value)" 
-                  class="copy-btn"
+              <span v-else-if="value" class="flex items-center gap-2 text-sm text-gray-900">
+                <span class="break-all">{{ value }}</span>
+                <button
+                  @click="copyToClipboard(value)"
+                  class="p-1 text-gray-400 hover:text-indigo-600 rounded transition-colors"
                   :title="'Copy ' + formatLabel(key)"
                 >
-                  📋
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
                 </button>
               </span>
-              <span v-else class="result-value not-found">Not found</span>
+              <span v-else class="text-sm text-gray-400 italic">Not found</span>
             </div>
           </div>
         </div>
@@ -86,7 +114,6 @@ const formatDate = (timestamp) => {
 const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text);
-    // You could add a toast notification here
     alert('Copied to clipboard!');
   } catch (error) {
     console.error('Failed to copy:', error);
@@ -104,9 +131,9 @@ const exportResults = () => {
   URL.revokeObjectURL(url);
 };
 
-const handleDelete = (index) => {
-  if (confirm(`Are you sure you want to delete the result for ${props.results[index].website}?`)) {
-    emit('delete', index);
+const handleDelete = (id) => {
+  if (confirm(`Are you sure you want to delete this result?`)) {
+    emit('delete', id);
   }
 };
 
@@ -116,172 +143,3 @@ const handleDeleteAll = () => {
   }
 };
 </script>
-
-<style scoped>
-.results-list {
-  margin-top: 2rem;
-}
-
-.no-results {
-  text-align: center;
-  padding: 3rem;
-  color: #999;
-  font-style: italic;
-}
-
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.results-header h2 {
-  margin: 0;
-  color: #333;
-}
-
-.export-btn {
-  padding: 0.5rem 1rem;
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
-}
-
-.export-btn:hover {
-  background-color: #357abd;
-}
-
-.delete-all-btn {
-  padding: 0.5rem 1rem;
-  background-color: #d32f2f;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
-}
-
-.delete-all-btn:hover {
-  background-color: #b71c1c;
-}
-
-.results-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.result-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1.5rem;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #eee;
-}
-
-.result-header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.result-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 1.2rem;
-}
-
-.timestamp {
-  color: #999;
-  font-size: 0.85rem;
-}
-
-.error-message {
-  color: #d32f2f;
-  padding: 0.75rem;
-  background-color: #ffebee;
-  border-radius: 4px;
-}
-
-.result-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.result-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-}
-
-.result-label {
-  font-weight: 600;
-  color: #555;
-  min-width: 100px;
-}
-
-.result-value {
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.result-value.not-found {
-  color: #999;
-  font-style: italic;
-}
-
-.copy-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0.25rem;
-  opacity: 0.6;
-  transition: opacity 0.3s;
-}
-
-.copy-btn:hover {
-  opacity: 1;
-}
-
-.delete-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0.25rem 0.5rem;
-  opacity: 0.6;
-  transition: opacity 0.3s;
-  border-radius: 4px;
-}
-
-.delete-btn:hover {
-  opacity: 1;
-  background-color: #ffebee;
-}
-</style>
-

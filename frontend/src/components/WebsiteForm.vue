@@ -1,12 +1,14 @@
 <template>
-  <div class="website-form">
-    <label for="websites">Websites (one per line or comma-separated):</label>
+  <div class="mb-6">
+    <label for="websites" class="block text-sm font-medium text-gray-700 mb-2">
+      Websites (one per line or comma-separated):
+    </label>
     <textarea
       id="websites"
       v-model="websitesInput"
       placeholder="acumenLogs.com&#10;guru.co.uk&#10;example.com"
       rows="6"
-      class="website-input"
+      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
     ></textarea>
   </div>
 </template>
@@ -40,33 +42,3 @@ watch(() => props.modelValue, (newValue) => {
   }
 }, { immediate: true });
 </script>
-
-<style scoped>
-.website-form {
-  margin-bottom: 1.5rem;
-}
-
-.website-form label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: #333;
-}
-
-.website-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-family: inherit;
-  resize: vertical;
-  transition: border-color 0.3s;
-}
-
-.website-input:focus {
-  outline: none;
-  border-color: #4a90e2;
-}
-</style>
-

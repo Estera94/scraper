@@ -1,0 +1,43 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install Chromium and dependencies for Puppeteer
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Configure npm for better performance and reliability
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set progress false
+
+# Set Puppeteer to skip Chromium download and use system Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev)
+# Use --verbose to see progress, --no-audit to speed up
+RUN npm install --verbose --no-audit || npm install --verbose --no-audit --legacy-peer-deps
+
+# Copy Prisma schema
+COPY prisma ./prisma
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Start with watch mode
+CMD ["npm", "run", "dev"]
+

@@ -1,46 +1,138 @@
-# Website Information Scraper Application
+# Website Scraper SaaS
 
-A full-stack application for scraping information from multiple websites including LinkedIn, email, Twitter, phone numbers, and WHMCS detection.
+A modern SaaS application for scraping website information (LinkedIn, Email, Twitter, Phone, WHMCS) with user authentication, credit-based payments via Stripe, and a clean Tailwind CSS UI.
 
-## Tech Stack
+## Features
 
-- **Frontend**: Vue.js 3 with Vite
-- **Backend**: Node.js with Express
-- **Scraping**: Puppeteer for web scraping
-- **Storage**: JSON file
+- 🔐 User authentication (JWT-based)
+- 💳 Credit-based payment system (Stripe)
+- 🗄️ PostgreSQL database with Prisma ORM
+- 🎨 Modern Tailwind CSS UI
+- 🐳 Docker support
+- 🔒 Protected routes and API endpoints
 
-## Setup
+## Quick Start with Docker (Recommended)
 
-### Backend
+### Prerequisites
+- Docker Desktop (or Docker Engine + Docker Compose)
+
+### 1. Start the application
 
 ```bash
-cd backend
-npm install
-npm start
+# Start all services (database, backend, frontend)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
 ```
 
-The backend will run on `http://localhost:3000`
+### 2. Access the application
 
-### Frontend
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3000
+- **Database**: localhost:5432
+
+### 3. Set up environment variables (optional)
+
+Create a `.env` file in the project root for custom configuration:
+
+```env
+JWT_SECRET=your-super-secret-jwt-key
+STRIPE_SECRET_KEY=sk_test_your_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_secret
+```
+
+### 4. Stop the application
 
 ```bash
+docker-compose down
+```
+
+**That's it!** The database will be automatically set up with migrations.
+
+## Manual Setup (Without Docker)
+
+See [QUICKSTART.md](./QUICKSTART.md) for detailed manual setup instructions.
+
+## Documentation
+
+- **[DOCKER.md](./DOCKER.md)** - Complete Docker guide
+- **[QUICKSTART.md](./QUICKSTART.md)** - Manual setup guide
+- **[SETUP.md](./SETUP.md)** - Detailed setup and configuration
+
+## Project Structure
+
+```
+website-scraper/
+├── backend/          # Node.js/Express API
+│   ├── src/
+│   │   ├── routes/   # API routes
+│   │   ├── services/ # Business logic
+│   │   └── middleware/ # Auth middleware
+│   └── prisma/       # Database schema
+├── frontend/         # Vue.js frontend
+│   └── src/
+│       ├── components/
+│       ├── views/
+│       └── services/
+└── docker-compose.yml # Docker configuration
+```
+
+## Development
+
+### With Docker
+
+```bash
+# Start in development mode (hot reload)
+docker-compose up
+
+# View logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Rebuild after dependency changes
+docker-compose up -d --build
+```
+
+### Without Docker
+
+```bash
+# Backend
+cd backend
+npm install
+npm run dev
+
+# Frontend (new terminal)
 cd frontend
 npm install
 npm run dev
 ```
 
-The frontend will run on `http://localhost:5173`
+## Production
 
-## Usage
-
-1. Add multiple websites (one per line or comma-separated)
-2. Select information types to extract (LinkedIn, Email, Twitter, Phone, WHMCS)
-3. Click "Scrape" to start the process
-4. View results and export to JSON
+```bash
+# Build and start production containers
+docker-compose -f docker-compose.prod.yml up -d --build
+```
 
 ## API Endpoints
 
-- `POST /api/scrape` - Scrape websites for selected information
-- `GET /api/results` - Get all saved results
-- `POST /api/save` - Save results to JSON file
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user
+- `POST /api/scrape` - Scrape websites (requires credits)
+- `GET /api/results` - Get scraping results
+- `POST /api/payments/create-checkout` - Create payment session
+- `GET /api/payments/packages` - Get credit packages
 
+## Tech Stack
+
+- **Backend**: Node.js, Express, Prisma, PostgreSQL, JWT, Stripe
+- **Frontend**: Vue 3, Vue Router, Tailwind CSS, Axios
+- **Database**: PostgreSQL
+- **Containerization**: Docker, Docker Compose
+
+## License
+
+ISC
