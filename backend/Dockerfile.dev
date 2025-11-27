@@ -10,7 +10,10 @@ RUN apk add --no-cache \
     freetype-dev \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    ttf-dejavu \
+    ttf-liberation \
+    font-noto-emoji
 
 # Configure npm for better performance and reliability
 RUN npm config set fetch-retries 5 && \

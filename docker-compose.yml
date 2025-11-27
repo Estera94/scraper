@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U scraper_user"]
+      test: ["CMD-SHELL", "pg_isready -U scraper_user -d website_scraper"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,6 +27,7 @@ services:
     container_name: website-scraper-backend
     environment:
       DATABASE_URL: postgresql://scraper_user:scraper_password@postgres:5432/website_scraper?schema=public
+      SHADOW_DATABASE_URL: postgresql://scraper_user:scraper_password@postgres:5432/website_scraper?schema=public
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_your_stripe_secret_key}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_your_stripe_publishable_key}
@@ -41,7 +42,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: ./start.sh
+    command: sh /app/start.sh
 
   # Frontend
   frontend:
