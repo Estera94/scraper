@@ -61,6 +61,41 @@
               <span v-if="key === 'whmcs'" class="text-sm text-gray-900">
                 {{ value ? 'Yes' : 'No' }}
               </span>
+              <div
+                v-else-if="key === 'customKeywords'"
+                class="flex-1 space-y-2"
+              >
+                <div
+                  v-if="Array.isArray(value) && value.length"
+                  class="space-y-2"
+                >
+                  <div
+                    v-for="item in value"
+                    :key="item.keyword"
+                    class="rounded-md border border-gray-200 p-3"
+                  >
+                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <span class="text-sm font-medium text-gray-800">{{ item.keyword }}</span>
+                      <span
+                        class="text-xs font-semibold uppercase"
+                        :class="item.found ? 'text-green-700' : 'text-gray-400'"
+                      >
+                        {{ item.found ? 'Found' : 'Not found' }}
+                      </span>
+                    </div>
+                    <div v-if="item.matches && item.matches.length" class="mt-2 space-y-1">
+                      <p
+                        v-for="(snippet, index) in item.matches"
+                        :key="index"
+                        class="text-xs text-gray-600 italic"
+                      >
+                        “…{{ snippet }}…”
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <span v-else class="text-sm text-gray-400 italic">No custom keywords provided.</span>
+              </div>
               <span v-else-if="value" class="flex items-center gap-2 text-sm text-gray-900">
                 <span class="break-all">{{ value }}</span>
                 <button
@@ -100,7 +135,8 @@ const formatLabel = (key) => {
     email: 'Email',
     twitter: 'Twitter',
     phone: 'Phone',
-    whmcs: 'WHMCS'
+    whmcs: 'WHMCS',
+    customKeywords: 'Custom Keywords'
   };
   return labels[key] || key;
 };

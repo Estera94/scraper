@@ -18,16 +18,16 @@
             </button>
             
             <button 
-              @click="loadResults" 
-              :disabled="isLoading"
+              @click="refreshCompanies" 
+              :disabled="companiesLoading"
               class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
-              Refresh Results
+              Refresh Companies
             </button>
           </div>
 
-          <div v-if="error" class="mt-4 rounded-md bg-red-50 p-4">
-            <div class="text-sm text-red-700">{{ error }}</div>
+          <div v-if="formError" class="mt-4 rounded-md bg-red-50 p-4">
+            <div class="text-sm text-red-700">{{ formError }}</div>
           </div>
 
           <div v-if="isScraping" class="mt-6 text-center">
@@ -36,7 +36,14 @@
           </div>
         </div>
 
-        <ResultsList :results="results" @delete="handleDelete" @delete-all="handleDeleteAll" />
+        <CompanyList
+          :companies="companies"
+          :loading="companiesLoading"
+          :error="companiesError"
+          @delete="handleDeleteCompany"
+          @delete-all="handleDeleteAllCompanies"
+          @refresh="refreshCompanies"
+        />
       </div>
     </main>
   </div>
@@ -46,40 +53,43 @@
 import { ref, onMounted } from 'vue';
 import WebsiteForm from '../components/WebsiteForm.vue';
 import InfoSelector from '../components/InfoSelector.vue';
-import ResultsList from '../components/ResultsList.vue';
+import CompanyList from '../components/Company/CompanyList.vue';
 import NavBar from '../components/NavBar.vue';
-import { scrapeWebsites, getResults, deleteResult, deleteAllResults } from '../services/api.js';
+import { scrapeWebsites, deleteCompany, deleteAllCompanies } from '../services/api.js';
 import { getCurrentUser } from '../services/auth.js';
+import { useCompanies } from '../composables/useCompanies.js';
 
 const websites = ref([]);
 const infoTypes = ref([]);
-const results = ref([]);
 const isScraping = ref(false);
-const isLoading = ref(false);
-const error = ref(null);
+const formError = ref(null);
+
+const {
+  companies,
+  companiesLoading,
+  companiesError,
+  fetchCompanies,
+  removeCompanyFromList
+} = useCompanies();
 
 const startScraping = async () => {
   if (websites.value.length === 0 || infoTypes.value.length === 0) {
-    error.value = 'Please add at least one website and select at least one information type.';
+    formError.value = 'Please add at least one website and select at least one information type.';
     return;
   }
 
   isScraping.value = true;
-  error.value = null;
+  formError.value = null;
 
   try {
-    const response = await scrapeWebsites(websites.value, infoTypes.value);
-    results.value = response.results;
-    
-    // Reload all results to show the complete list
-    await loadResults();
-    // Update user credits in navbar
+    await scrapeWebsites(websites.value, infoTypes.value);
+    await fetchCompanies();
     await updateUserCredits();
   } catch (err) {
     if (err.response?.status === 402) {
-      error.value = `Insufficient credits. You need ${err.response.data.required} credits but only have ${err.response.data.current}. Please purchase more credits.`;
+      formError.value = `Insufficient credits. You need ${err.response.data.required} credits but only have ${err.response.data.current}. Please purchase more credits.`;
     } else {
-      error.value = err.response?.data?.error || err.message || 'An error occurred while scraping.';
+      formError.value = err.response?.data?.error || err.message || 'An error occurred while scraping.';
     }
     console.error('Scraping error:', err);
   } finally {
@@ -87,28 +97,25 @@ const startScraping = async () => {
   }
 };
 
-const loadResults = async () => {
-  isLoading.value = true;
-  error.value = null;
-
+const refreshCompanies = async () => {
   try {
-    const response = await getResults();
-    results.value = response.results || [];
+    await fetchCompanies();
   } catch (err) {
-    error.value = err.response?.data?.error || err.message || 'Failed to load results.';
-    console.error('Load error:', err);
-  } finally {
-    isLoading.value = false;
+    formError.value = err.response?.data?.error || err.message || 'Failed to refresh companies.';
   }
 };
 
-const handleDelete = async (id) => {
+const handleDeleteCompany = async (id) => {
+  if (!confirm('Delete this company profile? This removes its history.')) {
+    return;
+  }
+
   try {
-    await deleteResult(id);
-    await loadResults();
+    await deleteCompany(id);
+    removeCompanyFromList(id);
   } catch (err) {
-    error.value = err.response?.data?.error || err.message || 'Failed to delete result.';
-    console.error('Delete error:', err);
+    formError.value = err.response?.data?.error || err.message || 'Failed to delete company.';
+    console.error('Delete company error:', err);
   }
 };
 
@@ -122,18 +129,22 @@ const updateUserCredits = async () => {
   }
 };
 
-const handleDeleteAll = async () => {
+const handleDeleteAllCompanies = async () => {
+  if (!confirm('Delete all company profiles? This action cannot be undone.')) {
+    return;
+  }
+
   try {
-    await deleteAllResults();
-    await loadResults();
+    await deleteAllCompanies();
+    await fetchCompanies();
   } catch (err) {
-    error.value = err.response?.data?.error || err.message || 'Failed to delete all results.';
-    console.error('Delete all error:', err);
+    formError.value = err.response?.data?.error || err.message || 'Failed to delete all companies.';
+    console.error('Delete all companies error:', err);
   }
 };
 
 onMounted(() => {
-  loadResults();
+  fetchCompanies();
 });
 </script>
 

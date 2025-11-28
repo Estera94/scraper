@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import scrapeRoutes from './routes/scrape.js';
 import authRoutes from './routes/auth.js';
 import paymentRoutes from './routes/payments.js';
+import reportsRoutes from './routes/reports.js';
 import { config } from './config.js';
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/reports', reportsRoutes);
 app.use('/api', scrapeRoutes);
 
 // Debug route to check registered routes

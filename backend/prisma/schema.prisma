@@ -19,7 +19,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   payments      Payment[]
-  scrapeResults ScrapeResult[]
+  companies     Company[]
+  companyNotes  CompanyNote[]
 
   @@map("users")
 }
@@ -38,14 +39,93 @@ model Payment {
   @@map("payments")
 }
 
-model ScrapeResult {
+model Company {
+  id             String   @id @default(cuid())
+  userId         String
+  domain         String
+  displayName    String?
+  latestSnapshot Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scrapes CompanyScrape[]
+  linkedin LinkedInProfile?
+  notes   CompanyNote[]
+
+  @@unique([userId, domain])
+  @@map("companies")
+}
+
+model CompanyScrape {
+  id         String   @id @default(cuid())
+  companyId  String
+  tool       String
+  infoTypes  Json?
+  results    Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_scrapes")
+}
+
+model LinkedInProfile {
+  id               String   @id @default(cuid())
+  companyId        String   @unique
+  companyUrl       String?
+  headline         String?
+  description      String?
+  industry         String?
+  followerCount    Int?
+  employeeCountMin Int?
+  employeeCountMax Int?
+  headquarters     Json?
+  website          String?
+  logoUrl          String?
+  lastScrapedAt    DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  company  Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contacts LinkedInContact[]
+
+  @@map("linkedin_profiles")
+}
+
+model LinkedInContact {
+  id               String   @id @default(cuid())
+  linkedinProfileId String
+  fullName         String?
+  title            String?
+  location         String?
+  email            String?
+  emailStatus      String?
+  linkedinUrl      String?
+  connectionDegree String?
+  metadata         Json?
+  scrapedAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  profile LinkedInProfile @relation(fields: [linkedinProfileId], references: [id], onDelete: Cascade)
+
+  @@index([linkedinProfileId], map: "idx_linkedin_contacts_profile")
+  @@map("linkedin_contacts")
+}
+
+model CompanyNote {
   id        String   @id @default(cuid())
+  companyId String
   userId    String
-  website   String
-  results   Json     // Store the scraped data as JSON
-  timestamp DateTime @default(now())
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("scrape_results")
+  @@map("company_notes")
+  @@index([companyId], map: "idx_company_notes_company")
 }

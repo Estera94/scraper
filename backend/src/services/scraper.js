@@ -1,6 +1,8 @@
 import puppeteer from 'puppeteer';
 import { config } from '../config.js';
 
+const CUSTOM_PREFIX = 'custom:';
+
 export class Scraper {
   constructor() {
     this.browser = null;
@@ -20,7 +22,8 @@ export class Scraper {
     }
   }
 
-  async scrapeWebsite(website, infoTypes) {
+  async scrapeWebsite(website, infoTypes = []) {
+    const requestedInfoTypes = Array.isArray(infoTypes) ? infoTypes : [];
     const results = {
       linkedin: null,
       email: null,
@@ -91,20 +94,46 @@ export class Scraper {
       // Extract information from all collected HTML
       const combinedHtml = allHtmlContent.join('\n');
       
-      if (infoTypes.includes('email')) {
+      if (requestedInfoTypes.includes('email')) {
         results.email = this.extractEmail(combinedHtml);
       }
-      if (infoTypes.includes('linkedin')) {
+      if (requestedInfoTypes.includes('linkedin')) {
         results.linkedin = this.extractLinkedIn(combinedHtml);
       }
-      if (infoTypes.includes('twitter')) {
+      if (requestedInfoTypes.includes('twitter')) {
         results.twitter = this.extractTwitter(combinedHtml);
       }
-      if (infoTypes.includes('phone')) {
+      if (requestedInfoTypes.includes('phone')) {
         results.phone = this.extractPhone(combinedHtml);
       }
-      if (infoTypes.includes('whmcs')) {
+      if (requestedInfoTypes.includes('whmcs')) {
         results.whmcs = this.extractWHMCS(combinedHtml);
+      }
+
+      const customKeywords = requestedInfoTypes
+        .filter(type => typeof type === 'string' && type.startsWith(CUSTOM_PREFIX))
+        .map(type => type.slice(CUSTOM_PREFIX.length).trim())
+        .filter(Boolean);
+
+      if (customKeywords.length > 0) {
+        const seen = new Set();
+        results.customKeywords = customKeywords
+          .filter(keyword => {
+            const key = keyword.toLowerCase();
+            if (seen.has(key)) {
+              return false;
+            }
+            seen.add(key);
+            return true;
+          })
+          .map(keyword => {
+            const matches = this.extractCustomKeywordMatches(combinedHtml, keyword);
+            return {
+              keyword,
+              found: matches.length > 0,
+              matches
+            };
+          });
       }
 
       return results;
@@ -212,6 +241,26 @@ export class Scraper {
     }
     
     return false;
+  }
+
+  extractCustomKeywordMatches(html, keyword) {
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedKeyword, 'gi');
+    const matches = [];
+    const contextRadius = 80;
+    let match;
+
+    while ((match = regex.exec(html)) !== null && matches.length < 3) {
+      const start = Math.max(0, match.index - contextRadius);
+      const end = Math.min(html.length, match.index + keyword.length + contextRadius);
+      const snippet = html
+        .slice(start, end)
+        .replace(/\s+/g, ' ')
+        .trim();
+      matches.push(snippet);
+    }
+
+    return matches;
   }
 }
 

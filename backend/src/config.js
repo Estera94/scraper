@@ -20,6 +20,14 @@ export const config = {
     protocolTimeout: 120000, // 2 minutes for protocol operations (browser launch, page creation, etc.)
     // Use system Chromium if available (Docker)
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+  },
+  linkedin: {
+    username: process.env.LINKEDIN_USERNAME || 'deolive.2018@gmail.com',
+    password: process.env.LINKEDIN_PASSWORD || 'Ferdie9991!',
+    baseUrl: 'https://www.linkedin.com',
+    companyPath: '/company/',
+    maxContacts: Number(process.env.LINKEDIN_MAX_CONTACTS || 50),
+    waitBetweenRequestsMs: Number(process.env.LINKEDIN_WAIT_MS || 2000)
   }
 }
 

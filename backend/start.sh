@@ -10,4 +10,5 @@ echo "Running migrations..."
 npx prisma migrate deploy || echo "No migrations to deploy, database may already be up to date"
 
 echo "Starting server..."
+
 exec npm run dev

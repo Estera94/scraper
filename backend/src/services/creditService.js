@@ -1,6 +1,7 @@
 import prisma from '../db/prisma.js';
 
 const CREDITS_PER_SCRAPE = 1; // Each website scrape costs 1 credit
+const LINKEDIN_CREDITS_PER_SCRAPE = Number(process.env.LINKEDIN_CREDITS_PER_SCRAPE || 3);
 
 /**
  * Check if user has sufficient credits
@@ -70,5 +71,5 @@ export async function addCredits(userId, amount) {
   };
 }
 
-export { CREDITS_PER_SCRAPE };
+export { CREDITS_PER_SCRAPE, LINKEDIN_CREDITS_PER_SCRAPE };
 
