@@ -9,12 +9,12 @@
           
           <div class="mt-6 flex gap-4">
             <button 
-              @click="startScraping" 
-              :disabled="isScraping || websites.length === 0 || infoTypes.length === 0"
+              @click="createBatch" 
+              :disabled="isCreating || websites.length === 0 || infoTypes.length === 0"
               class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
-              <span v-if="isScraping">Scraping...</span>
-              <span v-else>Start Scraping</span>
+              <span v-if="isCreating">Creating Batch...</span>
+              <span v-else>Create Scrape Batch</span>
             </button>
             
             <button 
@@ -30,9 +30,9 @@
             <div class="text-sm text-red-700">{{ formError }}</div>
           </div>
 
-          <div v-if="isScraping" class="mt-6 text-center">
+          <div v-if="isCreating" class="mt-6 text-center">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p class="mt-2 text-gray-600">Scraping websites... This may take a few moments.</p>
+            <p class="mt-2 text-gray-600">Creating scrape batch... Jobs will be processed automatically.</p>
           </div>
         </div>
 
@@ -51,17 +51,21 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import WebsiteForm from '../components/WebsiteForm.vue';
 import InfoSelector from '../components/InfoSelector.vue';
 import CompanyList from '../components/Company/CompanyList.vue';
 import NavBar from '../components/NavBar.vue';
-import { scrapeWebsites, deleteCompany, deleteAllCompanies } from '../services/api.js';
+import { deleteCompany, deleteAllCompanies } from '../services/api.js';
+import { createBatch as createBatchApi } from '../services/batchApi.js';
 import { getCurrentUser } from '../services/auth.js';
 import { useCompanies } from '../composables/useCompanies.js';
 
+const router = useRouter();
+
 const websites = ref([]);
 const infoTypes = ref([]);
-const isScraping = ref(false);
+const isCreating = ref(false);
 const formError = ref(null);
 
 const {
@@ -72,28 +76,35 @@ const {
   removeCompanyFromList
 } = useCompanies();
 
-const startScraping = async () => {
+const createBatch = async () => {
   if (websites.value.length === 0 || infoTypes.value.length === 0) {
     formError.value = 'Please add at least one website and select at least one information type.';
     return;
   }
 
-  isScraping.value = true;
+  isCreating.value = true;
   formError.value = null;
 
   try {
-    await scrapeWebsites(websites.value, infoTypes.value);
-    await fetchCompanies();
+    const response = await createBatchApi(websites.value, infoTypes.value);
     await updateUserCredits();
+    
+    // Redirect to batch detail page
+    if (response.batch?.id) {
+      router.push({ name: 'BatchDetail', params: { id: response.batch.id } });
+    } else {
+      // Fallback: redirect to batches list
+      router.push({ name: 'Batches' });
+    }
   } catch (err) {
     if (err.response?.status === 402) {
       formError.value = `Insufficient credits. You need ${err.response.data.required} credits but only have ${err.response.data.current}. Please purchase more credits.`;
     } else {
-      formError.value = err.response?.data?.error || err.message || 'An error occurred while scraping.';
+      formError.value = err.response?.data?.error || err.message || 'An error occurred while creating the batch.';
     }
-    console.error('Scraping error:', err);
+    console.error('Batch creation error:', err);
   } finally {
-    isScraping.value = false;
+    isCreating.value = false;
   }
 };
 

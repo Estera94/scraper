@@ -2,10 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import scrapeRoutes from './routes/scrape.js';
+import batchRoutes from './routes/batches.js';
 import authRoutes from './routes/auth.js';
 import paymentRoutes from './routes/payments.js';
 import reportsRoutes from './routes/reports.js';
 import { config } from './config.js';
+import { startCronScheduler, stopCronScheduler } from './services/cronScheduler.js';
 
 dotenv.config();
 
@@ -24,6 +26,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/batches', batchRoutes);
 app.use('/api', scrapeRoutes);
 
 // Debug route to check registered routes
@@ -44,7 +47,25 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
+let cronTask = null;
+
 app.listen(config.port, () => {
   console.log(`Server running on http://localhost:${config.port}`);
+  
+  // Start cron scheduler
+  cronTask = startCronScheduler();
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\nShutting down gracefully...');
+  stopCronScheduler(cronTask);
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\nShutting down gracefully...');
+  stopCronScheduler(cronTask);
+  process.exit(0);
 });
 

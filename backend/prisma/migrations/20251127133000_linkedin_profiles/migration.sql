@@ -50,3 +50,4 @@ ADD CONSTRAINT "linkedin_contacts_linkedinProfileId_fkey"
 FOREIGN KEY ("linkedinProfileId") REFERENCES "linkedin_profiles"("id")
 ON DELETE CASCADE ON UPDATE CASCADE;
 
+

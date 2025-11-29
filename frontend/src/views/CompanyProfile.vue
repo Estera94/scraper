@@ -268,7 +268,7 @@ const handleDeleteCompany = async () => {
     await deleteCompany(company.value.id);
     removeCompanyFromList(company.value.id);
     resetCompanyProfile();
-    router.push({ name: 'Home' });
+    router.push({ name: 'WebsiteScraper' });
   } catch (error) {
     formError.value = error.response?.data?.error || error.message || 'Failed to delete company.';
   }
@@ -295,7 +295,7 @@ const handleDeleteScrape = async (scrapeId) => {
 };
 
 const goBack = () => {
-  router.push({ name: 'Home' });
+  router.push({ name: 'WebsiteScraper' });
 };
 
 const formatDate = (value) => {

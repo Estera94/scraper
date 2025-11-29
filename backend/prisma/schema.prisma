@@ -21,6 +21,7 @@ model User {
   payments      Payment[]
   companies     Company[]
   companyNotes  CompanyNote[]
+  scrapeBatches ScrapeBatch[]
 
   @@map("users")
 }
@@ -128,4 +129,42 @@ model CompanyNote {
 
   @@map("company_notes")
   @@index([companyId], map: "idx_company_notes_company")
+}
+
+model ScrapeBatch {
+  id            String      @id @default(cuid())
+  userId        String
+  status        String      // pending, queued, processing, completed, failed
+  totalJobs     Int
+  completedJobs Int         @default(0)
+  failedJobs    Int         @default(0)
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs ScrapeJob[]
+
+  @@index([userId], map: "idx_scrape_batches_user")
+  @@index([status], map: "idx_scrape_batches_status")
+  @@map("scrape_batches")
+}
+
+model ScrapeJob {
+  id         String   @id @default(cuid())
+  batchId    String
+  website    String
+  infoTypes  Json     // array of info types
+  status     String   // pending, queued, processing, completed, failed
+  companyId  String?
+  scrapeId   String?
+  error      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  batch ScrapeBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId], map: "idx_scrape_jobs_batch")
+  @@index([status], map: "idx_scrape_jobs_status")
+  @@map("scrape_jobs")
 }

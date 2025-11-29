@@ -16,7 +16,17 @@ const routes = [
   },
   {
     path: '/',
-    name: 'Home',
+    redirect: '/dashboard'
+  },
+  {
+    path: '/tools',
+    name: 'Tools',
+    component: () => import('../views/Tools.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/website-scraper',
+    name: 'WebsiteScraper',
     component: () => import('../views/Home.vue'),
     meta: { requiresAuth: true }
   },
@@ -36,6 +46,18 @@ const routes = [
     path: '/reports',
     name: 'Reports',
     component: () => import('../views/Reports.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/batches',
+    name: 'Batches',
+    component: () => import('../views/Batches.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/batches/:id',
+    name: 'BatchDetail',
+    component: () => import('../views/BatchDetail.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -76,7 +98,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !authenticated) {
     next({ name: 'Login', query: { redirect: to.fullPath } });
   } else if (to.meta.requiresGuest && authenticated) {
-    next({ name: 'Home' });
+    next({ name: 'Dashboard' });
   } else {
     next();
   }

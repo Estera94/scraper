@@ -76,3 +76,4 @@ FROM "scrape_results" sr;
 -- Remove legacy table now that data is migrated
 DROP TABLE "scrape_results";
 
+

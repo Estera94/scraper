@@ -60,3 +60,4 @@ export const deleteCompanyNote = async ({ noteId, userId }) => {
   return true;
 };
 
+

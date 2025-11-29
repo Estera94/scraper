@@ -28,3 +28,4 @@ Make sure these variables are available to the backend (and frontend for the cre
 7. Verify credits decreased by `LINKEDIN_CREDITS_PER_SCRAPE`.
 8. Run `cd backend && npm test` to execute the LinkedIn helper tests.
 
+

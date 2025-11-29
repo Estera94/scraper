@@ -11,6 +11,8 @@ import {
   deleteCompanyScrapeForUser,
   getCompanyForUser
 } from '../services/companyService.js';
+import { createScrapeBatch } from '../services/batchService.js';
+import { createScrapeJobs } from '../services/jobService.js';
 import { dedupeWebsitesByDomain, domainToUrl } from '../utils/domains.js';
 import {
   scrapeLinkedInForCompany,
@@ -51,6 +53,7 @@ router.post('/scrape', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Info types array is required' });
     }
 
+    // Check credits upfront (but don't deduct yet - will deduct per job)
     const requiredCredits = normalizedTargets.length * CREDITS_PER_SCRAPE;
     const creditCheck = await checkCredits(userId, requiredCredits);
 
@@ -62,46 +65,28 @@ router.post('/scrape', authenticate, async (req, res) => {
       });
     }
 
-    const responses = [];
+    // Create batch
+    const batch = await createScrapeBatch(
+      userId,
+      normalizedTargets.map(t => t.website),
+      infoTypeList
+    );
 
-    for (const target of normalizedTargets) {
-      try {
-        console.log(`Scraping ${target.website} for: ${infoTypeList.join(', ')}`);
-        const scrapedData = await scraper.scrapeWebsite(target.website, infoTypeList);
-        const { company, scrape } = await upsertCompanyWithScrape({
-          userId,
-          website: target.website,
-          infoTypes: infoTypeList,
-          results: scrapedData
-        });
-
-        responses.push({
-          success: true,
-          companyId: company.id,
-          domain: company.domain,
-          website: target.website,
-          latestSnapshot: company.latestSnapshot,
-          scrapeId: scrape.id
-        });
-      } catch (error) {
-        console.error(`Error scraping ${target.website}:`, error);
-        responses.push({
-          success: false,
-          domain: target.domain,
-          website: target.website,
-          error: error.message
-        });
-      }
-    }
-
-    const successfulScrapes = responses.filter(result => result.success).length;
-    if (successfulScrapes > 0) {
-      await deductCredits(userId, successfulScrapes * CREDITS_PER_SCRAPE);
-    }
+    // Create jobs for the batch
+    await createScrapeJobs(
+      batch.id,
+      normalizedTargets.map(t => t.website),
+      infoTypeList
+    );
 
     res.json({
-      companies: responses,
-      creditsUsed: successfulScrapes * CREDITS_PER_SCRAPE
+      batch: {
+        id: batch.id,
+        status: batch.status,
+        totalJobs: batch.totalJobs,
+        createdAt: batch.createdAt
+      },
+      message: 'Scrape batch created successfully. Jobs will be processed by the scheduler.'
     });
   } catch (error) {
     console.error('Error in scrape endpoint:', error);

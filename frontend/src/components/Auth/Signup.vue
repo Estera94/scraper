@@ -81,7 +81,7 @@ const handleSignup = async () => {
 
   try {
     await register(email.value, password.value);
-    router.push('/');
+    router.push('/dashboard');
   } catch (err) {
     error.value = err.response?.data?.error || 'Failed to create account. Please try again.';
   } finally {

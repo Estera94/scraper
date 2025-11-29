@@ -82,7 +82,7 @@ const handleLogin = async () => {
 
   try {
     await login(email.value, password.value);
-    const redirect = route.query.redirect || '/';
+    const redirect = route.query.redirect || '/dashboard';
     router.push(redirect);
   } catch (err) {
     error.value = err.response?.data?.error || 'Failed to login. Please try again.';

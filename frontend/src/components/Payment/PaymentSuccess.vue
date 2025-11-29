@@ -17,7 +17,7 @@
             Go to Dashboard
           </router-link>
           <router-link
-            to="/"
+            to="/tools/website-scraper"
             class="block w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 font-medium"
           >
             Start Scraping
