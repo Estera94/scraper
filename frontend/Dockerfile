@@ -16,6 +16,12 @@ RUN npm ci --no-audit || npm install --no-audit
 # Copy application code
 COPY . .
 
+# Build argument for API URL
+ARG VITE_API_URL=/api
+
+# Set environment variable for build
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Build the application
 RUN npm run build
 

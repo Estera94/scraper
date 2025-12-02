@@ -6,3 +6,11 @@ dist/
 .vscode/
 .idea/
 
+# AWS specific
+aws/.env
+aws/*.pem
+aws/*.key
+aws/backups/
+*.pem
+*.key
+

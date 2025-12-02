@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+// Use environment variable for API URL
+// In production (AWS), this will be '/api' (relative URL) since Nginx proxies /api to backend
+// In development, fallback to localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
+
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
