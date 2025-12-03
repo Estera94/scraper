@@ -46,20 +46,34 @@
 
         <!-- Saved Custom Statuses -->
         <div v-if="savedCustomStatuses.length > 0 && !showCustomInput">
-          <button
+          <div
             v-for="customStatus in savedCustomStatuses"
             :key="customStatus.id"
-            type="button"
-            @click="selectCustomStatus(customStatus)"
-            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 flex items-center gap-2"
-            :class="{ 'bg-gray-50 font-medium': status === customStatus.label }"
+            class="group flex items-center hover:bg-gray-100"
           >
-            <span
-              class="w-3 h-3 rounded-full border border-gray-300"
-              :style="{ backgroundColor: getColorValue(customStatus.color) }"
-            ></span>
-            {{ customStatus.label }}
-          </button>
+            <button
+              type="button"
+              @click="selectCustomStatus(customStatus)"
+              class="flex-1 text-left px-4 py-2 text-sm text-gray-700 focus:outline-none focus:bg-gray-100 flex items-center gap-2"
+              :class="{ 'bg-gray-50 font-medium': status === customStatus.label }"
+            >
+              <span
+                class="w-3 h-3 rounded-full border border-gray-300"
+                :style="{ backgroundColor: getColorValue(customStatus.color) }"
+              ></span>
+              {{ customStatus.label }}
+            </button>
+            <button
+              type="button"
+              @click.stop="deleteCustomStatus(customStatus)"
+              class="px-2 py-2 text-gray-400 hover:text-red-600 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Delete custom status"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
           <div class="border-t border-gray-200 my-1"></div>
         </div>
 
@@ -144,7 +158,7 @@
 
 <script setup>
 import { ref, nextTick, watch, onMounted, onBeforeUnmount } from 'vue';
-import { updateCompanyStatus, getCustomStatuses, createCustomStatus } from '../../services/api.js';
+import { updateCompanyStatus, getCustomStatuses, createCustomStatus, deleteCustomStatus as apiDeleteCustomStatus } from '../../services/api.js';
 
 const props = defineProps({
   companyId: {
@@ -161,7 +175,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:status', 'status-changed', 'status-error', 'custom-status-created']);
+const emit = defineEmits(['update:status', 'status-changed', 'status-error', 'custom-status-created', 'custom-status-deleted']);
 
 const defaultStatuses = ['Contacted', 'Waiting Response', 'Not Interested'];
 const isOpen = ref(false);
@@ -273,6 +287,21 @@ const cancelCustomStatus = () => {
 
 const selectCustomStatus = async (customStatus) => {
   await updateStatus(customStatus.label);
+};
+
+const deleteCustomStatus = async (customStatus) => {
+  if (!confirm(`Delete custom status "${customStatus.label}"? This will not remove it from companies that already use it.`)) {
+    return;
+  }
+
+  try {
+    await apiDeleteCustomStatus(customStatus.id);
+    await loadCustomStatuses();
+    emit('custom-status-deleted', customStatus);
+  } catch (error) {
+    console.error('Error deleting custom status:', error);
+    alert('Failed to delete custom status. Please try again.');
+  }
 };
 
 const loadCustomStatuses = async () => {
