@@ -15,6 +15,18 @@ const routes = [
     meta: { requiresGuest: true }
   },
   {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('../components/Auth/ForgotPassword.vue'),
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('../components/Auth/ResetPassword.vue'),
+    meta: { requiresGuest: true }
+  },
+  {
     path: '/',
     redirect: '/dashboard'
   },

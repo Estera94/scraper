@@ -220,7 +220,26 @@
               </div>
 
               <!-- Actions -->
-              <div class="flex gap-2">
+              <div class="flex items-center gap-2">
+                <!-- Status Badge (if status exists) -->
+                <span
+                  v-if="company.status"
+                  class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium"
+                  :class="getStatusBadgeClass(company.status)"
+                  :style="getStatusBadgeStyle(company.status)"
+                >
+                  {{ company.status }}
+                </span>
+                
+                <!-- Status Dropdown -->
+                  <CompanyStatusDropdown
+                    :company-id="company.id"
+                    :status="company.status"
+                    :custom-status-color-map="customStatusColors"
+                    @status-changed="(newStatus) => handleStatusChanged(company.id, newStatus)"
+                    @custom-status-created="loadCustomStatusColors"
+                  />
+                
                 <router-link
                   :to="{ name: 'CompanyProfile', params: { id: company.id } }"
                   class="px-4 py-2 text-sm font-medium rounded-md border border-indigo-600 text-indigo-600 hover:bg-indigo-50 transition-colors"
@@ -247,7 +266,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import NavBar from '../components/NavBar.vue';
-import { getCompanies, deleteCompany } from '../services/api.js';
+import CompanyStatusDropdown from '../components/Company/CompanyStatusDropdown.vue';
+import { getCompanies, deleteCompany, getCustomStatuses } from '../services/api.js';
 
 const router = useRouter();
 
@@ -345,6 +365,15 @@ const handleDelete = async (companyId) => {
   }
 };
 
+const handleStatusChanged = (companyId, newStatus) => {
+  // Update the company in the list
+  // The component already handled the API call, we just need to update local state
+  const index = companies.value.findIndex(c => c.id === companyId);
+  if (index !== -1) {
+    companies.value[index] = { ...companies.value[index], status: newStatus };
+  }
+};
+
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
@@ -368,8 +397,62 @@ const formatDataType = (dataType) => {
   return labels[dataType] || dataType;
 };
 
+const customStatusColors = ref({});
+
+const getStatusBadgeClass = (status) => {
+  if (!status) return '';
+  
+  // Check if it's a custom status with saved color
+  if (customStatusColors.value[status]) {
+    return 'border';
+  }
+  
+  // Default status colors
+  const statusLower = status.toLowerCase();
+  if (statusLower.includes('contacted')) {
+    return 'bg-indigo-100 text-indigo-800 border border-indigo-300';
+  } else if (statusLower.includes('waiting') || statusLower.includes('response')) {
+    return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
+  } else if (statusLower.includes('not interested')) {
+    return 'bg-red-100 text-red-800 border border-red-300';
+  } else {
+    return 'bg-gray-100 text-gray-800 border border-gray-300';
+  }
+};
+
+const getStatusBadgeStyle = (status) => {
+  if (!status || !customStatusColors.value[status]) return {};
+  
+  const color = customStatusColors.value[status];
+  // Convert hex to RGB for background with opacity
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  return {
+    backgroundColor: `rgba(${r}, ${g}, ${b}, 0.1)`,
+    color: color,
+    borderColor: color
+  };
+};
+
+const loadCustomStatusColors = async () => {
+  try {
+    const response = await getCustomStatuses();
+    const colorMap = {};
+    (response.customStatuses || []).forEach(status => {
+      colorMap[status.label] = status.color;
+    });
+    customStatusColors.value = colorMap;
+  } catch (error) {
+    console.error('Error loading custom status colors:', error);
+  }
+};
+
 onMounted(() => {
   applyFilters();
+  loadCustomStatusColors();
 });
 </script>
 

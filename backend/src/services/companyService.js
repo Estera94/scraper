@@ -164,6 +164,7 @@ export const listUserCompanies = async (userId, filters = {}) => {
       userId: company.userId,
       domain: company.domain,
       displayName: company.displayName,
+      status: company.status,
       latestSnapshot: company.latestSnapshot,
       createdAt: company.createdAt,
       updatedAt: company.updatedAt,

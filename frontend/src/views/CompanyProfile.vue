@@ -32,13 +32,32 @@
       <div v-else class="space-y-6">
         <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h1 class="text-3xl font-bold text-gray-900">{{ company.displayName || company.domain }}</h1>
+            <div class="flex-1">
+              <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ company.displayName || company.domain }}</h1>
               <p class="text-sm text-gray-500">
                 Updated {{ formatDate(company.updatedAt) }}
               </p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+              <!-- Status Badge (if status exists) -->
+              <span
+                v-if="company.status"
+                class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium"
+                :class="getStatusBadgeClass(company.status)"
+                :style="getStatusBadgeStyle(company.status)"
+              >
+                {{ company.status }}
+              </span>
+              
+              <!-- Status Dropdown -->
+              <CompanyStatusDropdown
+                :company-id="company.id"
+                :status="company.status"
+                :custom-status-color-map="customStatusColors"
+                @status-changed="handleStatusChanged"
+                @custom-status-created="loadCustomStatusColors"
+              />
+              
               <button
                 type="button"
                 class="px-4 py-2 text-sm font-medium rounded-md border border-red-200 text-red-600 hover:bg-red-50"
@@ -160,6 +179,7 @@ import CompanyHistoryList from '../components/Company/CompanyHistoryList.vue';
 import LinkedInStatsCard from '../components/Company/LinkedInStatsCard.vue';
 import LinkedInContactsTable from '../components/Company/LinkedInContactsTable.vue';
 import CompanyNotes from '../components/Company/CompanyNotes.vue';
+import CompanyStatusDropdown from '../components/Company/CompanyStatusDropdown.vue';
 import { useCompanies } from '../composables/useCompanies.js';
 import {
   rescrapeCompany,
@@ -169,7 +189,8 @@ import {
   deleteCompanyLinkedIn,
   deleteLinkedInContact,
   createCompanyNote as apiCreateCompanyNote,
-  deleteCompanyNote as apiDeleteCompanyNote
+  deleteCompanyNote as apiDeleteCompanyNote,
+  getCustomStatuses
 } from '../services/api.js';
 
 const route = useRoute();
@@ -227,6 +248,7 @@ const loadProfile = async (options = { append: false }) => {
 
 onMounted(() => {
   loadProfile();
+  loadCustomStatusColors();
 });
 
 onBeforeUnmount(() => {
@@ -301,6 +323,59 @@ const formatDate = (value) => {
     return 'Never';
   }
   return new Date(value).toLocaleString();
+};
+
+const customStatusColors = ref({});
+
+const getStatusBadgeClass = (status) => {
+  if (!status) return '';
+  
+  // Check if it's a custom status with saved color
+  if (customStatusColors.value[status]) {
+    return 'border';
+  }
+  
+  // Default status colors
+  const statusLower = status.toLowerCase();
+  if (statusLower.includes('contacted')) {
+    return 'bg-indigo-100 text-indigo-800 border border-indigo-300';
+  } else if (statusLower.includes('waiting') || statusLower.includes('response')) {
+    return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
+  } else if (statusLower.includes('not interested')) {
+    return 'bg-red-100 text-red-800 border border-red-300';
+  } else {
+    return 'bg-gray-100 text-gray-800 border border-gray-300';
+  }
+};
+
+const getStatusBadgeStyle = (status) => {
+  if (!status || !customStatusColors.value[status]) return {};
+  
+  const color = customStatusColors.value[status];
+  // Convert hex to RGB for background with opacity
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  return {
+    backgroundColor: `rgba(${r}, ${g}, ${b}, 0.1)`,
+    color: color,
+    borderColor: color
+  };
+};
+
+const loadCustomStatusColors = async () => {
+  try {
+    const response = await getCustomStatuses();
+    const colorMap = {};
+    (response.customStatuses || []).forEach(status => {
+      colorMap[status.label] = status.color;
+    });
+    customStatusColors.value = colorMap;
+  } catch (error) {
+    console.error('Error loading custom status colors:', error);
+  }
 };
 
 // Credit system disabled - removed linkedinCreditsPerRun
@@ -383,6 +458,14 @@ const handleDeleteNote = async (noteId) => {
   }
   await apiDeleteCompanyNote(noteId);
   await fetchCompanyNotes(companyId.value);
+};
+
+const handleStatusChanged = (newStatus) => {
+  // Update the company in the active company state
+  if (company.value) {
+    company.value.status = newStatus;
+  }
+  // The component already handled the API call, we just need to update local state
 };
 </script>
 

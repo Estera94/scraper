@@ -1,6 +1,7 @@
 import express from 'express';
 import { Scraper } from '../services/scraper.js';
 import { authenticate } from '../middleware/auth.js';
+import prisma from '../db/prisma.js';
 // Credit system disabled - removed credit checks
 import {
   upsertCompanyWithScrape,
@@ -326,6 +327,129 @@ router.delete('/company-notes/:id', authenticate, async (req, res) => {
   } catch (error) {
     console.error('Error deleting note:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+router.patch('/companies/:id/status', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate status (allow null to clear status, or non-empty string)
+    if (status !== null && status !== undefined && (typeof status !== 'string' || status.trim().length === 0)) {
+      return res.status(400).json({ error: 'Status must be a non-empty string or null' });
+    }
+
+    // Verify company belongs to user
+    const company = await getCompanyForUser(req.user.id, id);
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    // Update status
+    const updatedCompany = await prisma.company.update({
+      where: { id },
+      data: { status: status?.trim() || null }
+    });
+
+    res.json({ company: updatedCompany });
+  } catch (error) {
+    console.error('Error updating company status:', error);
+    
+    // Provide more helpful error messages
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+    
+    // Check if it's a database schema error (column doesn't exist)
+    if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+      return res.status(500).json({ 
+        error: 'Database migration required. Please run: npx prisma migrate dev' 
+      });
+    }
+    
+    res.status(500).json({ error: error.message || 'Failed to update company status' });
+  }
+});
+
+// Get user's custom statuses
+router.get('/custom-statuses', authenticate, async (req, res) => {
+  try {
+    const customStatuses = await prisma.userCustomStatus.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ customStatuses });
+  } catch (error) {
+    console.error('Error fetching custom statuses:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch custom statuses' });
+  }
+});
+
+// Create a custom status
+router.post('/custom-statuses', authenticate, async (req, res) => {
+  try {
+    const { label, color } = req.body;
+
+    if (!label || !label.trim()) {
+      return res.status(400).json({ error: 'Label is required' });
+    }
+
+    if (!color || !color.trim()) {
+      return res.status(400).json({ error: 'Color is required' });
+    }
+
+    // Validate color format (hex or named color)
+    const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$|^[a-zA-Z]+$/;
+    if (!colorRegex.test(color.trim())) {
+      return res.status(400).json({ error: 'Invalid color format. Use hex (#RRGGBB) or color name' });
+    }
+
+    const customStatus = await prisma.userCustomStatus.upsert({
+      where: {
+        userId_label: {
+          userId: req.user.id,
+          label: label.trim()
+        }
+      },
+      update: {
+        color: color.trim()
+      },
+      create: {
+        userId: req.user.id,
+        label: label.trim(),
+        color: color.trim()
+      }
+    });
+
+    res.json({ customStatus });
+  } catch (error) {
+    console.error('Error creating custom status:', error);
+    res.status(500).json({ error: error.message || 'Failed to create custom status' });
+  }
+});
+
+// Delete a custom status
+router.delete('/custom-statuses/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const customStatus = await prisma.userCustomStatus.findUnique({
+      where: { id }
+    });
+
+    if (!customStatus || customStatus.userId !== req.user.id) {
+      return res.status(404).json({ error: 'Custom status not found' });
+    }
+
+    await prisma.userCustomStatus.delete({
+      where: { id }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting custom status:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete custom status' });
   }
 });
 

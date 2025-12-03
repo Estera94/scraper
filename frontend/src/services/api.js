@@ -111,5 +111,25 @@ export const deleteCompanyNote = async (id) => {
   return response.data;
 };
 
+export const updateCompanyStatus = async (id, status) => {
+  const response = await api.patch(`/companies/${id}/status`, { status });
+  return response.data;
+};
+
+export const getCustomStatuses = async () => {
+  const response = await api.get('/custom-statuses');
+  return response.data;
+};
+
+export const createCustomStatus = async (label, color) => {
+  const response = await api.post('/custom-statuses', { label, color });
+  return response.data;
+};
+
+export const deleteCustomStatus = async (id) => {
+  const response = await api.delete(`/custom-statuses/${id}`);
+  return response.data;
+};
+
 export default api;
 

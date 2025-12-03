@@ -6,11 +6,7 @@
         <div class="bg-white shadow rounded-lg p-6 mb-6">
           <h2 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-green-50 rounded-lg p-6">
-              <div class="text-sm font-medium text-green-600 mb-1">Total Payments</div>
-              <div class="text-3xl font-bold text-green-900">${{ totalSpent.toFixed(2) }}</div>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
             <div class="bg-purple-50 rounded-lg p-6">
               <div class="text-sm font-medium text-purple-600 mb-1">Total Results</div>
               <div class="text-3xl font-bold text-purple-900">{{ totalResults }}</div>
@@ -66,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import NavBar from './NavBar.vue';
 import { getStoredUser, getCurrentUser } from '../services/auth.js';
 import { getPaymentHistory } from '../services/payments.js';
@@ -77,11 +73,7 @@ const payments = ref([]);
 const totalResults = ref(0);
 const loadingPayments = ref(true);
 
-const totalSpent = computed(() => {
-  return payments.value
-    .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + p.amount, 0) / 100;
-});
+// Total Payments removed
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);

@@ -50,13 +50,23 @@
           </button>
         </div>
 
-        <div class="text-center">
-          <router-link
-            to="/signup"
-            class="font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            Don't have an account? Sign up
-          </router-link>
+        <div class="text-center space-y-2">
+          <div>
+            <router-link
+              to="/forgot-password"
+              class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Forgot your password?
+            </router-link>
+          </div>
+          <div>
+            <router-link
+              to="/signup"
+              class="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Don't have an account? Sign up
+            </router-link>
+          </div>
         </div>
       </form>
     </div>
@@ -107,7 +117,20 @@ const handleLogin = async () => {
     }
   } catch (err) {
     console.error('Login error:', err);
-    error.value = err.response?.data?.error || err.message || 'Failed to login. Please try again.';
+    
+    // Provide specific error messages
+    if (err.response?.status === 401) {
+      error.value = 'Invalid email or password. Please check your credentials and try again.';
+    } else if (err.response?.status === 400) {
+      error.value = err.response?.data?.error || 'Please provide both email and password.';
+    } else if (err.response?.status === 500) {
+      error.value = 'Server error. Please try again later.';
+    } else if (err.message === 'Network Error' || !err.response) {
+      error.value = 'Unable to connect to server. Please check your internet connection.';
+    } else {
+      error.value = err.response?.data?.error || err.message || 'Failed to login. Please try again.';
+    }
+    
     loading.value = false;
   }
 };
