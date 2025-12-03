@@ -45,12 +45,25 @@ export const register = async (email, password) => {
 };
 
 export const login = async (email, password) => {
-  const response = await api.post('/auth/login', { email, password });
-  if (response.data.token) {
-    localStorage.setItem('token', response.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+  try {
+    const response = await api.post('/auth/login', { email, password });
+    console.log('Login response:', response.data); // Debug log
+    if (response.data && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      console.log('Token stored in localStorage'); // Debug log
+      return response.data;
+    } else {
+      console.error('No token in response:', response.data);
+      throw new Error('No token received from server');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    if (error.response) {
+      console.error('Error response:', error.response.data);
+    }
+    throw error;
   }
-  return response.data;
 };
 
 export const logout = () => {

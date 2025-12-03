@@ -81,12 +81,33 @@ const handleLogin = async () => {
   error.value = '';
 
   try {
-    await login(email.value, password.value);
-    const redirect = route.query.redirect || '/dashboard';
-    router.push(redirect);
+    const result = await login(email.value, password.value);
+    console.log('Login result:', result); // Debug log
+    // Ensure token is stored before redirecting
+    if (result && result.token) {
+      // Verify token is actually stored
+      const storedToken = localStorage.getItem('token');
+      console.log('Stored token:', storedToken ? 'Yes' : 'No'); // Debug log
+      
+      if (!storedToken) {
+        error.value = 'Failed to store authentication token. Please try again.';
+        loading.value = false;
+        return;
+      }
+      
+      // Small delay to ensure localStorage is written and router can check it
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      const redirect = route.query.redirect || '/dashboard';
+      console.log('Redirecting to:', redirect); // Debug log
+      router.push(redirect);
+    } else {
+      error.value = 'Login failed: No token received';
+      loading.value = false;
+    }
   } catch (err) {
-    error.value = err.response?.data?.error || 'Failed to login. Please try again.';
-  } finally {
+    console.error('Login error:', err);
+    error.value = err.response?.data?.error || err.message || 'Failed to login. Please try again.';
     loading.value = false;
   }
 };
