@@ -83,9 +83,6 @@
           <div class="flex items-center space-x-4">
             <div class="text-sm text-gray-700">
               <span class="font-medium">{{ user?.email }}</span>
-              <span class="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-semibold">
-                {{ user?.credits || 0 }} credits
-              </span>
             </div>
             <button
               @click="handleLogout"

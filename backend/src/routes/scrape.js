@@ -1,7 +1,7 @@
 import express from 'express';
 import { Scraper } from '../services/scraper.js';
 import { authenticate } from '../middleware/auth.js';
-import { checkCredits, deductCredits, CREDITS_PER_SCRAPE, LINKEDIN_CREDITS_PER_SCRAPE } from '../services/creditService.js';
+// Credit system disabled - removed credit checks
 import {
   upsertCompanyWithScrape,
   listUserCompanies,
@@ -53,18 +53,7 @@ router.post('/scrape', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Info types array is required' });
     }
 
-    // Check credits upfront (but don't deduct yet - will deduct per job)
-    const requiredCredits = normalizedTargets.length * CREDITS_PER_SCRAPE;
-    const creditCheck = await checkCredits(userId, requiredCredits);
-
-    if (!creditCheck.hasCredits) {
-      return res.status(402).json({
-        error: 'Insufficient credits',
-        required: requiredCredits,
-        current: creditCheck.currentCredits
-      });
-    }
-
+    // Credit system disabled - no credit checks
     // Create batch
     const batch = await createScrapeBatch(
       userId,
@@ -164,15 +153,7 @@ router.post('/companies/:id/scrape', authenticate, async (req, res) => {
 
     const websiteInput = (req.body.website && req.body.website.trim()) || domainToUrl(company.domain);
 
-    const creditCheck = await checkCredits(req.user.id, CREDITS_PER_SCRAPE);
-    if (!creditCheck.hasCredits) {
-      return res.status(402).json({
-        error: 'Insufficient credits',
-        required: CREDITS_PER_SCRAPE,
-        current: creditCheck.currentCredits
-      });
-    }
-
+    // Credit system disabled - no credit checks
     console.log(`Re-scraping company ${company.domain} (${websiteInput})`);
     const scrapedData = await scraper.scrapeWebsite(websiteInput, infoTypeList);
     const { company: updatedCompany, scrape } = await upsertCompanyWithScrape({
@@ -181,8 +162,6 @@ router.post('/companies/:id/scrape', authenticate, async (req, res) => {
       infoTypes: infoTypeList,
       results: scrapedData
     });
-
-    await deductCredits(req.user.id, CREDITS_PER_SCRAPE);
 
     res.json({
       company: updatedCompany,
@@ -220,21 +199,11 @@ router.post('/companies/:id/linkedin-scrape', authenticate, async (req, res) => 
       return res.status(404).json({ error: 'Company not found' });
     }
 
-    const creditCheck = await checkCredits(req.user.id, LINKEDIN_CREDITS_PER_SCRAPE);
-    if (!creditCheck.hasCredits) {
-      return res.status(402).json({
-        error: 'Insufficient credits',
-        required: LINKEDIN_CREDITS_PER_SCRAPE,
-        current: creditCheck.currentCredits
-      });
-    }
-
+    // Credit system disabled - no credit checks
     const { profile, contacts } = await scrapeLinkedInForCompany({
       company,
       linkedinUrl: req.body.linkedinUrl
     });
-
-    await deductCredits(req.user.id, LINKEDIN_CREDITS_PER_SCRAPE);
 
     res.json({
       profile,

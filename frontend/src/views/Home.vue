@@ -87,7 +87,6 @@ const createBatch = async () => {
 
   try {
     const response = await createBatchApi(websites.value, infoTypes.value);
-    await updateUserCredits();
     
     // Redirect to batch detail page
     if (response.batch?.id) {
@@ -97,11 +96,7 @@ const createBatch = async () => {
       router.push({ name: 'Batches' });
     }
   } catch (err) {
-    if (err.response?.status === 402) {
-      formError.value = `Insufficient credits. You need ${err.response.data.required} credits but only have ${err.response.data.current}. Please purchase more credits.`;
-    } else {
-      formError.value = err.response?.data?.error || err.message || 'An error occurred while creating the batch.';
-    }
+    formError.value = err.response?.data?.error || err.message || 'An error occurred while creating the batch.';
     console.error('Batch creation error:', err);
   } finally {
     isCreating.value = false;
@@ -130,15 +125,7 @@ const handleDeleteCompany = async (id) => {
   }
 };
 
-// Update NavBar user credits after operations
-const updateUserCredits = async () => {
-  try {
-    const user = await getCurrentUser();
-    localStorage.setItem('user', JSON.stringify(user));
-  } catch (error) {
-    console.error('Failed to update user credits:', error);
-  }
-};
+// Credit system disabled - removed updateUserCredits function
 
 const handleDeleteAllCompanies = async () => {
   if (!confirm('Delete all company profiles? This action cannot be undone.')) {

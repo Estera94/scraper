@@ -3,7 +3,7 @@ import { Scraper } from './scraper.js';
 import { getPendingJobs, markJobAsQueued, markJobAsProcessing, updateJobStatus } from './jobService.js';
 import { incrementBatchCounters, recalculateBatchStatus, updateBatchStatus } from './batchService.js';
 import { upsertCompanyWithScrape } from './companyService.js';
-import { checkCredits, deductCredits, CREDITS_PER_SCRAPE } from './creditService.js';
+// Credit system disabled - removed credit checks
 
 const scraper = new Scraper();
 let isProcessing = false;
@@ -17,17 +17,7 @@ const processScrapeJob = async (job) => {
     // Mark as processing
     await markJobAsProcessing(job.id);
 
-    // Check if user has credits
-    const creditCheck = await checkCredits(job.batch.userId, CREDITS_PER_SCRAPE);
-    if (!creditCheck.hasCredits) {
-      await updateJobStatus(job.id, 'failed', {
-        error: `Insufficient credits. Required: ${CREDITS_PER_SCRAPE}, Available: ${creditCheck.currentCredits}`
-      });
-      await incrementBatchCounters(job.batchId, 'failedJobs');
-      await recalculateBatchStatus(job.batchId);
-      return;
-    }
-
+    // Credit system disabled - no credit checks
     // Execute scraping
     console.log(`[Cron] Processing job ${job.id}: Scraping ${job.website} for: ${JSON.stringify(job.infoTypes)}`);
     const scrapedData = await scraper.scrapeWebsite(job.website, job.infoTypes);
@@ -40,9 +30,7 @@ const processScrapeJob = async (job) => {
       results: scrapedData
     });
 
-    // Deduct credits
-    await deductCredits(job.batch.userId, CREDITS_PER_SCRAPE);
-
+    // Credit system disabled - no credit deduction
     // Update job as completed
     await updateJobStatus(job.id, 'completed', {
       companyId: company.id,

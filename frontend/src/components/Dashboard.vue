@@ -6,11 +6,7 @@
         <div class="bg-white shadow rounded-lg p-6 mb-6">
           <h2 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-indigo-50 rounded-lg p-6">
-              <div class="text-sm font-medium text-indigo-600 mb-1">Available Credits</div>
-              <div class="text-3xl font-bold text-indigo-900">{{ user?.credits || 0 }}</div>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div class="bg-green-50 rounded-lg p-6">
               <div class="text-sm font-medium text-green-600 mb-1">Total Payments</div>
               <div class="text-3xl font-bold text-green-900">${{ totalSpent.toFixed(2) }}</div>
@@ -19,15 +15,6 @@
               <div class="text-sm font-medium text-purple-600 mb-1">Total Results</div>
               <div class="text-3xl font-bold text-purple-900">{{ totalResults }}</div>
             </div>
-          </div>
-
-          <div class="mb-6">
-            <router-link
-              to="/dashboard/purchase"
-              class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 font-medium"
-            >
-              Purchase Credits
-            </router-link>
           </div>
         </div>
 
@@ -45,7 +32,6 @@
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
@@ -56,9 +42,6 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     ${{ (payment.amount / 100).toFixed(2) }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ payment.credits }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span

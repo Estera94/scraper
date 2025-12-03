@@ -7,7 +7,7 @@ import {
   deleteBatch
 } from '../services/batchService.js';
 import { createScrapeJobs } from '../services/jobService.js';
-import { checkCredits, CREDITS_PER_SCRAPE } from '../services/creditService.js';
+// Credit system disabled - removed credit checks
 import { dedupeWebsitesByDomain } from '../utils/domains.js';
 
 const router = express.Router();
@@ -35,18 +35,7 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Info types array is required' });
     }
 
-    // Check credits upfront (but don't deduct yet - will deduct per job)
-    const requiredCredits = normalizedTargets.length * CREDITS_PER_SCRAPE;
-    const creditCheck = await checkCredits(userId, requiredCredits);
-
-    if (!creditCheck.hasCredits) {
-      return res.status(402).json({
-        error: 'Insufficient credits',
-        required: requiredCredits,
-        current: creditCheck.currentCredits
-      });
-    }
-
+    // Credit system disabled - no credit checks
     // Create batch
     const batch = await createScrapeBatch(
       userId,

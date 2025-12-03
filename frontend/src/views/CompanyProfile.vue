@@ -104,9 +104,7 @@
                   <span v-if="isLinkedInScraping">Scraping LinkedIn...</span>
                   <span v-else>Run LinkedIn scrape</span>
                 </button>
-                <p class="text-xs text-gray-500">
-                  Costs {{ linkedinCreditsPerRun }} credits per run.
-                </p>
+                <!-- Credit system disabled -->
               </div>
 
               <div v-if="linkedinErrorMessage || linkedinError" class="mt-3 text-sm text-red-600">
@@ -305,7 +303,7 @@ const formatDate = (value) => {
   return new Date(value).toLocaleString();
 };
 
-const linkedinCreditsPerRun = import.meta.env.VITE_LINKEDIN_CREDITS_PER_SCRAPE || 3;
+// Credit system disabled - removed linkedinCreditsPerRun
 
 const handleLinkedInScrape = async () => {
   linkedinErrorMessage.value = null;
