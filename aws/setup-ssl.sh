@@ -71,9 +71,9 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # Proxy to frontend
+    # Proxy to frontend (Docker container on port 8080)
     location / {
-        proxy_pass http://localhost:80;
+        proxy_pass http://localhost:8080;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -95,11 +95,30 @@ server {
     }
 }
 
-# Redirect HTTP to HTTPS
+# HTTP server - proxy to frontend and redirect to HTTPS for non-API calls
 server {
     listen 80;
     server_name _;
-    return 301 https://$host$request_uri;
+    
+    # Allow Let's Encrypt validation
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    # Proxy API requests directly (no redirect)
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
 EOF
 

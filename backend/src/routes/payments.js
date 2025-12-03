@@ -4,7 +4,10 @@ import prisma from '../db/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe only if secret key is provided
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 // Credit packages configuration
 const CREDIT_PACKAGES = [
@@ -16,6 +19,10 @@ const CREDIT_PACKAGES = [
 // Create Stripe checkout session
 router.post('/create-checkout', authenticate, async (req, res) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Payment service is not configured' });
+    }
+
     const { packageId } = req.body;
 
     if (!packageId) {
@@ -74,6 +81,10 @@ router.post('/create-checkout', authenticate, async (req, res) => {
 
 // Stripe webhook handler (raw body is handled in server.js)
 router.post('/webhook', async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Payment service is not configured' });
+  }
+
   const sig = req.headers['stripe-signature'];
   let event;
 

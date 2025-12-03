@@ -36,6 +36,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
       LINKEDIN_USERNAME: ${LINKEDIN_USERNAME:-}
       LINKEDIN_PASSWORD: ${LINKEDIN_PASSWORD:-}
+    ports:
+      - "3000:3000"  # Expose backend for Nginx to proxy
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,7 +55,7 @@ services:
         VITE_API_URL: /api
     container_name: website-scraper-frontend
     ports:
-      - "80:80"
+      - "8080:80"  # Changed to 8080 to avoid conflict with Nginx
     depends_on:
       - backend
     restart: unless-stopped
