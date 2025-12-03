@@ -170,3 +170,4 @@ stripe listen --forward-to localhost:3000/api/payments/webhook
 9. Implement password reset functionality
 10. Add admin dashboard for managing users and payments
 
+
