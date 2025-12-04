@@ -53,3 +53,4 @@ docker-compose logs backend
 If you see any Puppeteer/Chromium errors, the scraper config has been updated to handle it automatically.
 
 
+
