@@ -7,7 +7,7 @@ set -e
 
 # Configuration - UPDATE THESE VALUES
 KEY_NAME="website-scraper-key"  # Your EC2 key pair name
-KEY_PATH="${HOME}/.ssh/${KEY_NAME}.pem"  # Path to your private key file
+KEY_PATH="${HOME}/Desktop/${KEY_NAME}.pem"  # Path to your private key file
 REGION="us-east-1"              # AWS region
 INSTANCE_TYPE="t3.micro"        # Instance type (t3.micro if free tier expired, otherwise t2.micro)
 AMI_ID=""                       # Leave empty to auto-detect latest Amazon Linux 2023

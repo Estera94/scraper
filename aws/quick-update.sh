@@ -6,7 +6,7 @@
 set -e
 
 EC2_HOST="3.222.214.39"
-KEY_PATH="${HOME}/.ssh/website-scraper-key.pem"
+KEY_PATH="${HOME}/Desktop/website-scraper-key.pem"
 
 echo "Quick update to $EC2_HOST..."
 
