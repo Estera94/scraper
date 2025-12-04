@@ -7,7 +7,9 @@ set -e
 
 # Configuration - UPDATE THESE VALUES
 KEY_NAME="website-scraper-key"  # Your EC2 key pair name
-KEY_PATH="${HOME}/Desktop/${KEY_NAME}.pem"  # Path to your private key file
+# KEY_PATH can be set as environment variable or will default to ~/.ssh/${KEY_NAME}.pem
+# Example: KEY_PATH=~/Desktop/my-key.pem ./deploy.sh
+KEY_PATH="${KEY_PATH:-${HOME}/.ssh/${KEY_NAME}.pem}"  # Path to your private key file
 REGION="us-east-1"              # AWS region
 INSTANCE_TYPE="t3.micro"        # Instance type (t3.micro if free tier expired, otherwise t2.micro)
 AMI_ID=""                       # Leave empty to auto-detect latest Amazon Linux 2023
@@ -48,7 +50,9 @@ fi
 # Check if key file exists
 if [ ! -f "$KEY_PATH" ]; then
     print_error "SSH key file not found at: $KEY_PATH"
-    print_error "Please update KEY_PATH in deploy.sh or place your key file at the expected location."
+    print_error "Please:"
+    print_error "  1. Set KEY_PATH environment variable: KEY_PATH=/path/to/key.pem ./deploy.sh"
+    print_error "  2. Or place your key file at the default location: ~/.ssh/${KEY_NAME}.pem"
     exit 1
 fi
 

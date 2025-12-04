@@ -1,12 +1,14 @@
 #!/bin/bash
 
 # Quick update script - simpler alternative
-# Usage: ./quick-update.sh
+# Usage: ./quick-update.sh [SSH_KEY_PATH]
+# Or set KEY_PATH environment variable: KEY_PATH=~/Desktop/key.pem ./quick-update.sh
 
 set -e
 
 EC2_HOST="3.222.214.39"
-KEY_PATH="${HOME}/Desktop/website-scraper-key.pem"
+# KEY_PATH can be passed as argument, set as environment variable, or will default to ~/.ssh/website-scraper-key.pem
+KEY_PATH="${1:-${KEY_PATH:-${HOME}/.ssh/website-scraper-key.pem}}"
 
 echo "Quick update to $EC2_HOST..."
 
